@@ -1,0 +1,35 @@
+%% Слой 6: HSM и контроль их работоспособности. Только Mermaid.
+flowchart LR
+    subgraph CELLS["Блоки b1 … b6"]
+        direction TB
+        TR["<b>Transaction Receiver</b><br/>проверка MAC, перешифровка PIN,<br/>смена ключей терминала"]
+        DLV["<b>Delivery</b><br/>подпись MAC ответа"]
+        POOL["<b>Клиент HSM в каждом блоке</b><br/>лимит запросов на блок<br/>выбор HSM с наименьшей очередью"]
+    end
+
+    subgraph HSMS["6 · HSM ×7 (нужно 5, запас 2)"]
+        direction TB
+        H1["<b>HSM 1 … 5</b><br/>в работе"]
+        H6["<b>HSM 6, 7</b><br/>запас: обслуживание + отказ"]
+    end
+
+    MON["Алерт дежурным"]
+
+    TR ==> POOL
+    DLV ==> POOL
+    POOL ==>|"операции с ключами"| H1
+    POOL ==> H6
+    POOL -.->|"проверочная операция раз в 1 с"| H1
+    POOL -.->|"3 неудачи → исключить из раздачи"| MON
+
+    classDef pos fill:#eef2f7,stroke:#5b6b7f,color:#1a1a1a
+    classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
+    classDef cell fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef db fill:#f1eaf7,stroke:#7c5aa0,color:#1a1a1a
+    classDef hsm fill:#fbe9e7,stroke:#b0524b,color:#1a1a1a
+    classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
+    classDef proc fill:#eeeeee,stroke:#555555,color:#1a1a1a
+    classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
+    class TR,DLV,POOL cell
+    class H1,H6 hsm
+    class MON obs

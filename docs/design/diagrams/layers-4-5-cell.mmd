@@ -1,0 +1,48 @@
+%% Слои 4-5: что внутри блока. Только Mermaid, вставляется в mermaid.live целиком.
+flowchart LR
+    GW["ISO-Gateway"]
+    CR["Callback Router"]
+    PROC["Процессинг"]
+    HSM["HSM"]
+    SI[("Стендины SI1, SI2")]
+
+    subgraph CELL["Блок b5"]
+        direction TB
+        TR["<b>Transaction Receiver</b><br/>проверки, MAC,<br/>ключ идемпотентности"]
+        PS["<b>Processing Sender</b><br/>отправка в процессинг,<br/>лимит и предохранитель"]
+        RR["<b>Result Receiver</b><br/>приём результата"]
+        DLV["<b>Delivery</b><br/>подпись и доставка ответа"]
+        TM["<b>Timeout Monitor</b><br/>сроки, выяснение статуса,<br/>автореверсы"]
+        PG[("<b>PostgreSQL</b><br/>primary + 2 реплики")]
+    end
+
+    GW ==>|"запрос"| TR
+    TR ==> PS
+    PS ==>|"Submit"| PROC
+    PROC -.->|"результат"| CR
+    CR ==> RR
+    RR ==> DLV
+    DLV ==>|"ответ"| GW
+
+    TR --- PG
+    RR --- PG
+    TM --- PG
+    TM -.->|"GetStatus, Reverse"| PROC
+    TR -->|"MAC, PIN"| HSM
+    DLV -->|"MAC"| HSM
+    PG -.->|"асинхронная репликация"| SI
+
+    classDef pos fill:#eef2f7,stroke:#5b6b7f,color:#1a1a1a
+    classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
+    classDef cell fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef db fill:#f1eaf7,stroke:#7c5aa0,color:#1a1a1a
+    classDef hsm fill:#fbe9e7,stroke:#b0524b,color:#1a1a1a
+    classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
+    classDef proc fill:#eeeeee,stroke:#555555,color:#1a1a1a
+    classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
+    class TR,PS,RR,DLV,TM cell
+    class PG,SI db
+    class PROC proc
+    class GW,CR edge
+    class HSM hsm
+    style CELL fill:#f5f8fd,stroke:#4a6fa5

@@ -1,0 +1,39 @@
+%% Слой 7: аудит и наблюдение. Только Mermaid.
+flowchart LR
+    PG[("PostgreSQL блока<br/>таблица txn_events")]
+    ALL["Все компоненты"]
+
+    subgraph AUDIT["Аудит"]
+        direction LR
+        K["Kafka"]
+        CH[("ClickHouse<br/>поиск и отчёты")]
+        W[("WORM-хранилище<br/>5 лет, без правок")]
+    end
+
+    subgraph OBS["Наблюдение"]
+        direction LR
+        LOG["Логи"]
+        MET["Метрики и алерты"]
+    end
+
+    OPS(["Дежурные, ИБ"])
+
+    PG -.->|"поток изменений (CDC)"| K
+    K -.-> CH
+    K -.-> W
+    ALL -.-> LOG
+    ALL -.-> MET
+    MET -.->|"алерт"| OPS
+    CH -.-> OPS
+
+    classDef pos fill:#eef2f7,stroke:#5b6b7f,color:#1a1a1a
+    classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
+    classDef cell fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef db fill:#f1eaf7,stroke:#7c5aa0,color:#1a1a1a
+    classDef hsm fill:#fbe9e7,stroke:#b0524b,color:#1a1a1a
+    classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
+    classDef proc fill:#eeeeee,stroke:#555555,color:#1a1a1a
+    classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
+    class PG,CH,W db
+    class K,LOG,MET obs
+    class ALL,OPS proc

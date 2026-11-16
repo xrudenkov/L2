@@ -1,0 +1,48 @@
+%% Управление и стендины. Только Mermaid.
+flowchart LR
+    subgraph CTL["Управление (вне пути транзакции)"]
+        direction TB
+        RC["<b>Routing Config</b><br/>etcd ×5<br/>кольцо, карта блоков,<br/>правила A / B"]
+        FO["<b>Failover Orchestrator</b> ×2<br/>решает о переводе блока"]
+    end
+
+    subgraph DP["Кто читает настройки"]
+        direction TB
+        GW["ISO-Gateway ×8"]
+        CR["Callback Router ×4"]
+    end
+
+    subgraph MAIN["Основной блок B5"]
+        direction TB
+        APP5["Приложения b5"]
+        PG5[("PostgreSQL b5<br/>primary + 2 реплики")]
+    end
+
+    subgraph SI["Стендин SI1 (второй — SI2)"]
+        direction TB
+        APPSI["Приложения стендина<br/>(прогреты, без трафика)"]
+        PGSI[("Копии БД всех 6 блоков")]
+    end
+
+    RC -.->|"настройки, по версиям"| GW
+    RC -.-> CR
+    GW ==>|"сейчас: b5 → B5"| APP5
+    GW -.->|"после перевода: b5 → SI1"| APPSI
+    PG5 -.->|"непрерывная<br/>асинхронная репликация"| PGSI
+    FO -.->|"свои пробы"| APP5
+    FO -->|"новая версия карты"| RC
+
+    classDef pos fill:#eef2f7,stroke:#5b6b7f,color:#1a1a1a
+    classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
+    classDef cell fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef db fill:#f1eaf7,stroke:#7c5aa0,color:#1a1a1a
+    classDef hsm fill:#fbe9e7,stroke:#b0524b,color:#1a1a1a
+    classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
+    classDef proc fill:#eeeeee,stroke:#555555,color:#1a1a1a
+    classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
+    class RC,FO ctl
+    class GW,CR edge
+    class APP5,APPSI cell
+    class PG5,PGSI db
+    style CTL fill:#fffcf0,stroke:#b8860b,stroke-dasharray:5 5
+    style SI fill:#f5f8fd,stroke:#4a6fa5,stroke-dasharray:5 5

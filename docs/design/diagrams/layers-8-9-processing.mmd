@@ -1,0 +1,40 @@
+%% Слои 8-9: обмен с процессингом. Только Mermaid.
+flowchart LR
+    subgraph CELL["Блок b5"]
+        direction TB
+        PS["<b>Processing Sender</b>"]
+        TM["<b>Timeout Monitor</b>"]
+        RR["<b>Result Receiver</b>"]
+    end
+
+    subgraph L9["9 · Процессинг (чёрный ящик)"]
+        direction TB
+        PA["<b>Процессинг A</b>"]
+        PB["<b>Процессинг B</b>"]
+    end
+
+    CR["<b>8 · Callback Router</b> ×4<br/>блок берётся из пути:<br/>/v1/cells/b5/result"]
+    RC["Routing Config<br/>карта блоков"]
+
+    PS ==>|"Submit → ACCEPTED / DUPLICATE / BUSY / REJECTED"| PA
+    PS -.->|"если A недоступен и правила разрешают"| PB
+    TM -.->|"GetStatus — если результата нет 5 с"| PA
+    TM -.->|"Reverse — отмена"| PA
+    PA -.->|"Result, другое соединение"| CR
+    PB -.-> CR
+    CR ==>|"в блок-владелец → 200 после записи"| RR
+    RC -.-> CR
+
+    classDef pos fill:#eef2f7,stroke:#5b6b7f,color:#1a1a1a
+    classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
+    classDef cell fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef db fill:#f1eaf7,stroke:#7c5aa0,color:#1a1a1a
+    classDef hsm fill:#fbe9e7,stroke:#b0524b,color:#1a1a1a
+    classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
+    classDef proc fill:#eeeeee,stroke:#555555,color:#1a1a1a
+    classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
+    class PS,TM,RR cell
+    class PA,PB proc
+    class CR edge
+    class RC ctl
+    style CELL fill:#f5f8fd,stroke:#4a6fa5
