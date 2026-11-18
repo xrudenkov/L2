@@ -1,0 +1,61 @@
+%% Слои 4-5: что внутри блока. Только Mermaid, вставляется в mermaid.live целиком.
+flowchart LR
+    GW["ISO-Gateway"]
+    CR["Callback Router"]
+    PROC["Процессинг"]
+    HSM["HSM"]
+    SI[("Стендины SI1, SI2")]
+
+    subgraph BLOCK["Блок b5: одно приложение, три роли запуска"]
+        direction TB
+        subgraph RQ["Роль Request ×4–8"]
+            direction TB
+            TR["<b>Transaction Receiver</b><br/>проверки, MAC,<br/>ключ идемпотентности"]
+            PS["<b>Processing Sender</b><br/>отправка в процессинг,<br/>лимит и предохранитель"]
+        end
+        subgraph RS["Роль Response ×3–6"]
+            direction TB
+            RR["<b>Result Receiver</b><br/>приём результата"]
+            DLV["<b>Delivery</b><br/>подпись и доставка ответа"]
+        end
+        TM["<b>Роль Timeout Monitor</b> ×2<br/>сроки, выяснение статуса,<br/>автореверсы"]
+        PG[("<b>PostgreSQL</b><br/>primary + 2 синхронные реплики<br/>(ждём 1 из 2)")]
+        PAT["<b>Patroni</b> ×3<br/>агент на каждом сервере БД"]
+        DCS[("<b>etcd блока</b> ×3 — DCS<br/>ключ лидера с TTL")]
+    end
+
+    GW ==>|"запрос"| TR
+    TR ==> PS
+    PS ==>|"Submit"| PROC
+    PROC -.->|"результат"| CR
+    CR ==> RR
+    RR ==> DLV
+    DLV ==>|"ответ"| GW
+
+    TR --- PG
+    RR --- PG
+    TM --- PG
+    TM -.->|"GetStatus, Reverse"| PROC
+    TR -->|"MAC, PIN"| HSM
+    DLV -->|"MAC"| HSM
+    PAT ---|"управляет"| PG
+    PAT <-->|"ключ лидера"| DCS
+    PG -.->|"асинхронная репликация"| SI
+
+    classDef pos fill:#eef2f7,stroke:#5b6b7f,color:#1a1a1a
+    classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
+    classDef blk fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef db fill:#f1eaf7,stroke:#7c5aa0,color:#1a1a1a
+    classDef hsm fill:#fbe9e7,stroke:#b0524b,color:#1a1a1a
+    classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
+    classDef proc fill:#eeeeee,stroke:#555555,color:#1a1a1a
+    classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
+    class TR,PS,RR,DLV,TM blk
+    class PG,SI,DCS db
+    class PAT blk
+    class PROC proc
+    class GW,CR edge
+    class HSM hsm
+    style BLOCK fill:#f5f8fd,stroke:#4a6fa5
+    style RQ fill:#ffffff,stroke:#4a6fa5,stroke-dasharray:4 3
+    style RS fill:#ffffff,stroke:#4a6fa5,stroke-dasharray:4 3

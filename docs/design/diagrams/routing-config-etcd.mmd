@@ -14,7 +14,7 @@ flowchart LR
         F2(["Ведомый"])
         F3(["Ведомый"])
         F4(["Ведомый"])
-        KV[("<b>Данные</b><br/>/routing/ring<br/>/routing/ring-history/…<br/>/routing/cellmap/b1…b6<br/>/routing/processing<br/>/routing/override/…<br/>номер версии = revision")]
+        KV[("<b>Данные</b><br/>/routing/ring<br/>/routing/ring-history/…<br/>/routing/blockmap/b1…b6<br/>/routing/processing<br/>/routing/override/…<br/>номер версии = revision")]
         L ==>|"журнал"| F1
         L ==>|"журнал"| F2
         L ==>|"журнал"| F3
@@ -26,26 +26,25 @@ flowchart LR
         direction TB
         GW["<b>ISO-Gateway</b> ×8<br/>кольцо, карта блоков"]
         CR["<b>Callback Router</b> ×4<br/>карта блоков"]
-        APP["<b>Приложения блоков</b><br/>кольцо: проверка,<br/>что терминал свой"]
     end
 
     FO -->|"запись с условием<br/>«версия не менялась»"| L
     ADM -->|"запись с условием"| L
     KV -.->|"① чтение всего при запуске<br/>② подписка (watch): изменения<br/>приходят сами, за миллисекунды<br/>③ сверка версии раз в 30 с"| GW
     KV -.-> CR
-    KV -.-> APP
 
+    NB["Приложения блоков в etcd не ходят:<br/>бизнес-слой не зависит от слоя управления.<br/>Защиту от второго владельца даёт БД:<br/>standby-кластер только для чтения"]
+    R --- NB
     NOTE["Запись принята, когда она на диске<br/>у 3 узлов из 5. Отказ 2 узлов — работаем.<br/>Отказ 3 — записи нет, транзакции идут<br/>по копиям в памяти"]
     ETCD --- NOTE
 
     classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
-    classDef cell fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef blk fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
     classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
     classDef etcd fill:#ffe9a8,stroke:#b8860b,color:#1a1a1a
     classDef note fill:#ffffff,stroke:#999999,stroke-dasharray:4 4,color:#1a1a1a
     class GW,CR edge
-    class APP cell
     class FO,ADM ctl
     class L,F1,F2,F3,F4,KV etcd
-    class NOTE note
+    class NOTE,NB note
     style ETCD fill:#fffcf0,stroke:#b8860b,stroke-width:2px

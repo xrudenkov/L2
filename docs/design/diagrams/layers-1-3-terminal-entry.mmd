@@ -20,7 +20,7 @@ flowchart LR
         GW8["<b>gw-08</b>"]
     end
 
-    CELL["<b>Блок терминала</b><br/>выбран по F41"]
+    BLOCK["<b>Блок терминала</b><br/>выбран по F41"]
     RC["<b>Routing Config</b><br/>кольцо, карта блоков"]
 
     POS -.->|"при включении"| DNS
@@ -32,15 +32,17 @@ flowchart LR
     RT2 ==> GW2
     RT2 ==> GW8
     GW1 -.->|"BGP: анонс VIP"| RT1
-    GW1 ==>|"accept(iso, sessionId)"| CELL
-    GW2 ==> CELL
-    GW8 ==> CELL
-    CELL ==>|"deliver(sessionId) — на шлюз из sessionId"| GW1
+    GW1 ==>|"accept(iso, connectionId)"| BLOCK
+    GW2 ==> BLOCK
+    GW8 ==> BLOCK
+    BLOCK ==>|"deliver(connectionId) — на шлюз из connectionId"| GW1
+    GW1 ===|"◀ 0210 ответ: обратно через маршрутизатор"| RT1
+    RT1 ===|"◀"| POS
     RC -.->|"настройки по версиям"| GW2
 
     classDef pos fill:#eef2f7,stroke:#5b6b7f,color:#1a1a1a
     classDef edge fill:#e8f4ea,stroke:#4f8a5b,color:#1a1a1a
-    classDef cell fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
+    classDef blk fill:#e7effa,stroke:#4a6fa5,color:#1a1a1a
     classDef db fill:#f1eaf7,stroke:#7c5aa0,color:#1a1a1a
     classDef hsm fill:#fbe9e7,stroke:#b0524b,color:#1a1a1a
     classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
@@ -48,5 +50,5 @@ flowchart LR
     classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
     class POS,DNS,TMS pos
     class RT1,RT2,GW1,GW2,GW8 edge
-    class CELL cell
+    class BLOCK blk
     class RC ctl
