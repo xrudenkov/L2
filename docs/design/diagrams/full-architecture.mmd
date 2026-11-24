@@ -19,6 +19,7 @@ flowchart LR
             direction TB
             TR["<b>Transaction Receiver</b><br/>проверки, MAC,<br/>ключ идемпотентности"]
             PS["<b>Processing Sender</b><br/>Submit, лимит,<br/>предохранитель, выбор A / B"]
+            DLR["<b>Delivery</b> (библиотека)<br/>доставка сохранённого ответа"]
         end
         subgraph RS["Роль Response — путь ответа"]
             direction TB
@@ -54,7 +55,7 @@ flowchart LR
     subgraph CTL["Управление (вне пути транзакции)"]
         direction TB
         RC[("<b>etcd маршрутизации</b> ×5, Raft<br/>(Routing Config)<br/>кольцо, карта блоков,<br/>правила A / B, номер версии")]
-        FO["<b>Failover Orchestrator</b> ×2<br/>следит за жизнью блоков,<br/>решает по большинству,<br/>изолирует блок, делает promote<br/>копии в стендине,<br/>пишет новую карту"]
+        FO["<b>Оркестратор переключения блоков</b> ×2<br/>следит за жизнью блоков,<br/>решает по большинству,<br/>изолирует блок, делает promote<br/>копии в стендине,<br/>пишет новую карту"]
         ADM["Инженер через конвейер<br/>кольцо, правила, миграция"]
     end
 
@@ -68,8 +69,10 @@ flowchart LR
     POS ==>|"① 0200 Покупка"| RT
     RT ==>|"хеш соединения"| GW
     GW ==>|"② accept + connectionId"| TR
-    TR ==>|"③ запись RECEIVED"| PG
-    TR ==> PS
+    TR ==>|"③ поиск по ключу<br/>или запись RECEIVED"| PG
+    TR ==>|"новая операция"| PS
+    TR -->|"повтор, ответ уже в БД<br/>вызов внутри Request"| DLR
+    GW ---|"◀ сохранённый ответ<br/>по connectionId повтора"| DLR
     PS ==>|"④ Submit → ACCEPTED"| PA
     PS -.->|"если A недоступен"| PB
     PA -.->|"⑤ Result"| CR
@@ -130,7 +133,7 @@ flowchart LR
     classDef infra fill:#f6f0fb,stroke:#7c5aa0,stroke-dasharray:3 3,color:#1a1a1a
     class POS,DNS,TMS pos
     class RT,GW,CR edge
-    class TR,PS,RR,DLV,TM,SIAPP blk
+    class TR,PS,DLR,RR,DLV,TM,SIAPP blk
     class PG,SIPG db
     class PAT,SIPAT,DCS,SIDCS infra
     class HSM hsm

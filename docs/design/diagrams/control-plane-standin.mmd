@@ -3,7 +3,7 @@ flowchart LR
     subgraph CTL["Управление (вне пути транзакции)"]
         direction TB
         RC["<b>Routing Config</b><br/>etcd ×5<br/>кольцо, карта блоков,<br/>правила A / B"]
-        FO["<b>Failover Orchestrator</b> ×2<br/>решает о переводе блока"]
+        FO["<b>Оркестратор переключения блоков</b> ×2<br/>решает о переводе блока"]
     end
 
     subgraph DP["Кто читает настройки"]

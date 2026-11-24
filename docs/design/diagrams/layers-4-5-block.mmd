@@ -12,6 +12,7 @@ flowchart LR
             direction TB
             TR["<b>Transaction Receiver</b><br/>проверки, MAC,<br/>ключ идемпотентности"]
             PS["<b>Processing Sender</b><br/>отправка в процессинг,<br/>лимит и предохранитель"]
+            DLR["<b>Delivery</b> (библиотека)<br/>доставка сохранённого ответа"]
         end
         subgraph RS["Роль Response ×3–6"]
             direction TB
@@ -25,14 +26,16 @@ flowchart LR
     end
 
     GW ==>|"запрос"| TR
-    TR ==> PS
+    TR ==>|"новая операция"| PS
+    TR -->|"повтор, ответ уже в БД<br/>вызов внутри Request"| DLR
+    DLR -->|"сохранённый ответ<br/>по connectionId повтора"| GW
     PS ==>|"Submit"| PROC
     PROC -.->|"результат"| CR
     CR ==> RR
     RR ==> DLV
     DLV ==>|"ответ"| GW
 
-    TR --- PG
+    TR ---|"поиск по ключу идемпотентности"| PG
     RR --- PG
     TM --- PG
     TM -.->|"GetStatus, Reverse"| PROC
@@ -50,7 +53,7 @@ flowchart LR
     classDef obs fill:#fff3dc,stroke:#b8860b,color:#1a1a1a
     classDef proc fill:#eeeeee,stroke:#555555,color:#1a1a1a
     classDef ctl fill:#fff8e1,stroke:#b8860b,color:#1a1a1a
-    class TR,PS,RR,DLV,TM blk
+    class TR,PS,DLR,RR,DLV,TM blk
     class PG,SI,DCS db
     class PAT blk
     class PROC proc
